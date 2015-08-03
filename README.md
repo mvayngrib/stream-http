@@ -1,95 +1,105 @@
-# stream-http [![Build Status](https://travis-ci.org/jhiesey/stream-http.svg?branch=master)](https://travis-ci.org/jhiesey/stream-http)
+# react-native-http
 
-[![Sauce Test Status](https://saucelabs.com/browser-matrix/stream-http.svg)](https://saucelabs.com/u/stream-http)
+The
+[http](http://nodejs.org/docs/v0.4.10/api/all.html#hTTP) module from node.js,
+but for React Native.
 
-This module is an implementation of node's native `http` module for the browser.
-It tries to match node's api and behavior as closely as possible, but some features
-aren't available, since browsers don't give nearly as much control over requests.
+When you `require('http')` in
+[react-native](http://github.com/facebook/react-native),
+this module will be loaded.
 
-This is heavily inspired by, and intended to replace, [http-browserify](https://github.com/substack/http-browserify)
+_adapted from John Hiesey's [stream-http](https://github.com/jhiesey/stream-http), thanks John!_
 
-## What does it do?
+# example
 
-In accordance with its name, `stream-http` tries to provide data to its caller before
-the request has completed whenever possible.
+```js
+var http = require('http')
 
-The following browsers support true streaming, where only a small amount of the request
-has to be held in memory at once:
-* Chrome >= 43 (using the `fetch` api)
-* Firefox >= 9 (using `moz-chunked-arraybuffer` responseType with xhr)
+http.get({ path : '/beep' }, function (res) {
+    var div = document.getElementById('result')
+    div.innerHTML += 'GET /beep<br>'
 
-The following browsers support pseudo-streaming, where the data is available before the
-request finishes, but the entire response must be held in memory:
-* Chrome
-* Safari >= 5, and maybe older
-* IE >= 10
-* Most other Webkit-based browsers, including the default Android browser
+    res.on('data', function (buf) {
+        div.innerHTML += buf
+    })
 
-All browsers newer than IE8 support binary responses. All of the above browsers that
-support true streaming or pseudo-streaming support that for binary data as well
-except for IE10. Old (presto-based) Opera also does not support binary streaming either.
-
-## How do you use it?
-
-The intent is to have the same api as the client part of the
-[node HTTP module](https://nodejs.org/api/http.html). The interfaces are the same wherever
-practical, although limitations in browsers make an exact clone of the node api impossible.
-
-This module implements `http.request`, `http.get`, and most of `http.ClientRequest`
-and `http.IncomingMessage` in addition to `http.METHODS` and `http.STATUS_CODES`. See the
-node docs for how these work.
-
-### Extra features compared to node
-
-* The `options.withCredentials` boolean flag, used to indicate if the browser should send
-cookies or authentication information with a CORS request. Default true.
-
-This module has to make some tradeoffs to support binary data and/or streaming. Generally,
-the module can make a fairly good decision about which underlying browser features to use,
-but sometimes it helps to get a little input from the user.
-
-* The `options.mode` field passed into `http.request` or `http.get` can take on one of the
-following values:
-  * 'default' (or any falsy value, including undefined): Try to provide partial data before
-the equest completes, but not at the cost of correctness for binary data. In some cases
-the implementation may be a bit slow.
-  * 'prefer-stream': Provide data before the request completes even if binary data (anything
-that isn't a single-byte ASCII or utf8 character) will be corrupted. Of course, this option
-is only safe for text data.
-  * 'prefer-fast': Use an implementation that does less processing even if it means that
-partial data isn't available. This is particularly useful when making large requests in
-a browser like Safari that has a weaker javascript engine.
-
-### Features missing compared to node
-
-* `http.Agent` is only a stub
-* The 'socket', 'connect', 'upgrade', and 'continue' events on `http.ClientRequest`.
-* Any operations, including `request.setTimeout`, that operate directly on the underlying
-socket.
-* Any options that are disallowed for security reasons. This includes setting or getting
-certian headers.
-* `message.httpVersion`
-* `message.rawHeaders` is modified by the browser, and may not quite match what is sent by
-the server.
-* `message.trailers` and `message.rawTrailers` will remain empty.
-
-## Example
-
-``` js
-http.get('/bundle.js', function (res) {
-	var div = document.getElementById('result');
-	div.innerHTML += 'GET /beep<br>';
-	
-	res.on('data', function (buf) {
-		div.innerHTML += buf;
-	});
-	
-	res.on('end', function () {
-		div.innerHTML += '<br>__END__';
-	});
+    res.on('end', function () {
+        div.innerHTML += '<br>__END__'
+    })
 })
 ```
 
-## License
+# http methods
 
-MIT. Copyright (C) John Hiesey and other contributors.
+var http = require('http');
+
+## var req = http.request(opts, cb)
+
+where `opts` are:
+
+* `opts.method='GET'` - http method verb
+* `opts.path` - path string, example: `'/foo/bar?baz=555'`
+* `opts.headers={}` - as an object mapping key names to string or Array values
+* `opts.host=window.location.host` - http host
+* `opts.port=window.location.port` - http port
+* `opts.responseType` - response type to set on the underlying xhr object
+
+The callback will be called with the response object.
+
+## var req = http.get(options, cb)
+
+A shortcut for
+
+``` js
+options.method = 'GET';
+var req = http.request(options, cb);
+req.end();
+```
+
+# request methods
+
+## req.setHeader(key, value)
+
+Set an http header.
+
+## req.getHeader(key)
+
+Get an http header.
+
+## req.removeHeader(key)
+
+Remove an http header.
+
+## req.write(data)
+
+Write some data to the request body.
+
+If only 1 piece of data is written, `data` can be a FormData, Blob, or
+ArrayBuffer instance. Otherwise, `data` should be a string or a buffer.
+
+## req.end(data)
+
+Close and send the request body, optionally with additional `data` to append.
+
+# response methods
+
+## res.getHeader(key)
+
+Return an http header, if set. `key` is case-insensitive.
+
+# response attributes
+
+* res.statusCode, the numeric http response code
+* res.headers, an object with all lowercase keys
+
+# install
+
+With [npm](https://npmjs.org) do:
+
+```
+npm install react-native-http
+```
+
+# license
+
+MIT
