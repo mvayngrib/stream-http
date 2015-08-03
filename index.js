@@ -2,8 +2,11 @@ var ClientRequest = require('./lib/request')
 var extend = require('xtend')
 var statusCodes = require('builtin-status-codes')
 var url = require('url')
-
 var http = exports
+var defaults = {
+	protocol: 'http:',
+	port: 80
+}
 
 http.request = function (opts, cb) {
 	if (typeof opts === 'string')
@@ -18,11 +21,11 @@ http.request = function (opts, cb) {
 	opts.method = opts.method || 'GET'
 	opts.headers = opts.headers || {}
 	opts.path = opts.path || '/'
-	opts.protocol = opts.protocol || window.location.protocol
+	opts.protocol = opts.protocol || defaults.protocol
 	// If the hostname is provided, use the default port for the protocol. If
 	// the url is instead relative, use window.location.port
-	var defaultPort = (opts.hostname || hostHostname) ? (opts.protocol === 'https:' ? 443 : 80) : window.location.port
-	opts.hostname = opts.hostname || hostHostname || window.location.hostname
+	var defaultPort = (opts.hostname || hostHostname) ? (opts.protocol === 'https:' ? 443 : 80) : defaults.port
+	opts.hostname = opts.hostname || hostHostname
 	opts.port = opts.port || hostPort || defaultPort
 
 	// Also valid opts.auth, opts.mode
